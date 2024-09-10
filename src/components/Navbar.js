@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; 
 import './Navbar.css'; 
 
 function Navbar() {
@@ -9,7 +10,7 @@ function Navbar() {
         <input className="navbar-search" type="text" placeholder="Search..." />
         <div className="navbar-links">
           <span>Post</span>
-          <span>Login</span>
+          <Link to="/login">Login</Link> 
         </div>
       </div>
     </nav>
