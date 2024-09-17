@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import './Signup.css';
 import { addDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from './firebase';
-import bcrypt from 'bcryptjs'; 
+import { db, auth } from './firebase'; 
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import bcrypt from 'bcryptjs'
 
 const Signup = () => {
   const [contact, setContact] = useState({ 
@@ -23,27 +24,28 @@ const Signup = () => {
     });
   };
 
-  const handleSignup = async () => {
+  const SignupConfig = async () => {
     const { firstName, lastName, email, password } = contact;
-    const dbref = collection(db, 'Auth');
 
     try {
+      const dbref = collection(db, 'Auth');
+      const emailCheck = query(dbref, where('Email', '==', email));
+      const emailInfo = await getDocs(emailCheck);
 
-      const checkemail = query(dbref, where('Email', '==', email));
-      const emailSnapshot = await getDocs(checkemail);
-
-      if(!emailSnapshot.empty){
-        alert('This email already Exist. Try a diffrent Email!');
+      if (!emailInfo.empty) {
+        alert('This email already exists. Try a different email!');
         return;
       }
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      await createUserWithEmailAndPassword(auth, email, password);
+
+      const hidePassword = await bcrypt.hash(password, 10);
 
       await addDoc(dbref, {
         FirstName: firstName,
         LastName: lastName,
         Email: email,
-        Password: hashedPassword,
+        Password: hidePassword,
       });
 
       navigate('/login');
@@ -104,7 +106,7 @@ const Signup = () => {
       
       <br></br>
 
-      <button onClick={handleSignup}>Sign Up</button>
+      <button onClick={SignupConfig}>Sign Up</button>
     </div>
   );
 };

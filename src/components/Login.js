@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
 import './Login.css';
-import {getDocs, collection, where, query} from 'firebase/firestore';
-import {db} from './firebase';
+import { getDocs, collection, where, query } from 'firebase/firestore';
+import { db, auth } from './firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import bcrypt from 'bcryptjs';
 
 const Login = () => {
@@ -21,49 +22,38 @@ const Login = () => {
     });
   };
 
-  const handleLogin = async () => 
-  {
-    const { email, password} = contact;
-    const dbref = collection(db, 'Auth');
+  const LoginConfig = async () => {
+    const { email, password } = contact;
 
-try {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
 
-  const checkUser = query(dbref, where('Email', '==', email));
-  const emailSnap = await getDocs(checkUser);
-  const user = emailSnap.docs.map(doc => doc.data());
 
-  if (user.length > 0 ) {
+      const dbref = collection(db, 'Auth');
+      const checkUser = query(dbref, where('Email', '==', email));
+      const emailInfo = await getDocs(checkUser);
+      const user = emailInfo.docs.map(doc => doc.data());
 
-    const users = user[0];
-    const checkPassword = await bcrypt.compare(password, users.Password);
+      if (user.length > 0) {
+        const users = user[0];
+        const PasswordCheck = await bcrypt.compare(password, users.Password);
 
-    if (checkPassword) {
-
-      navigate('/')
-      
-    } else {
-
-      alert('Inavlid password. Try again!');
-      
+        if (PasswordCheck) {
+          navigate('/profile');
+        } else {
+          alert('Invalid password. Try again!');
+        }
+      } else {
+        alert('Invalid email. No account found!');
+      }
+    } catch (error) {
+      alert(error.message);
     }
-    
-  } else {
-
-    alert('Inavlid Email. No account found!');
-    
-  }
-  
-} catch (error) {
-  
-  alert(error.message);
-}
-
-
-  }
+  };
 
   return (
     <div className="header-div">
-      <label htmlFor="username" className="input-label">Your Email</label>
+      <label htmlFor="email" className="input-label">Your Email</label>
       <input
         id="email"
         name="email"
@@ -87,7 +77,7 @@ try {
       
       <br></br>
 
-      <button onClick={handleLogin}>Login</button>
+      <button onClick={LoginConfig}>Login</button>
 
       <br></br>
       <br></br>
